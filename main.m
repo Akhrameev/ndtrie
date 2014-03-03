@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
 #import "NDTrie.h"
 
-static NSString		* const kSampleFile = @"/Users/nathan/Developer/Projects/Libraries/ndtrie/sample_file_xml.plist";
+static NSString		* const kSampleFile = @"/Users/pavelakhrameev/Projects/ndtrie/sample_file_xml.plist";
 static NSString		* const kUNIXWordsFilePath = @"/usr/share/dict/words";
 
 static void testSetOne();
