@@ -35,6 +35,9 @@ void testSetOne()
 
 	NSCAssert( theTrie.count == 7, @"The Trie had %lu strings", theTrie.count );
 
+    NSCAssert([theTrie occurancesForKey:@"do"] == 0, @"For keys not in Trie occurances should be 0");
+    NSCAssert([theTrie occurancesForKey:@"dog"] == 1, @"For key in Trie, plcaes once result dhould be 1");
+    NSCAssert([theTrie occurancesForKey:@"caterpillar"] == 2, @"For key, placed twice result should be 2");
 	for( NSString * theString in theTestTrueStrings )
 		NSCAssert( [theTrie containsObjectForKey:theString], @"The Trie did NOT contain %@", theString );
 
@@ -42,7 +45,6 @@ void testSetOne()
 		NSCAssert( ![theTrie containsObjectForKey:theString], @"The Trie did contain %@", theString );
 
 	NSCAssert( [theTrie containsObjectForKey:@"cat"], @"The Trie did NOT contain a string with prefix cat" );
-
 	NSCAssert( ![theTrie containsObjectForKey:@"cats"], @"The Trie did contain a string with prefix cats" );
 
 	theTempArray = [theTrie everyObject];

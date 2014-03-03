@@ -22,6 +22,7 @@ struct trieNode
 	NSUInteger			key;
 	NSUInteger			count,
 						size;
+    NSUInteger          occurrences;
 	id					object;
 	struct trieNode		* parent;
 	struct trieNode		** children;
@@ -35,7 +36,7 @@ struct getObjectsCountData
 	id								* objects;
 };
 
-static struct trieNode * findNode( struct trieNode *, id, NSUInteger, BOOL, struct trieNode **, NSUInteger *, NSUInteger (*)( id, NSUInteger, BOOL* ));
+static struct trieNode * findNode( struct trieNode * aNode, id aKey, NSUInteger anIndex, BOOL aCreate, struct trieNode ** aParent, NSUInteger * anPosition, NSUInteger (*aKeyComponentFunc)( id, NSUInteger, BOOL * ) );
 static BOOL removeObjectForKey( struct trieNode *, id, NSUInteger, BOOL *, NSUInteger (*)( id, NSUInteger, BOOL* ) );
 static NSUInteger removeAllChildren( struct trieNode *);
 static NSUInteger removeChild( struct trieNode *, id, NSUInteger (*)( id, NSUInteger, BOOL* ) );
@@ -384,6 +385,12 @@ enum NDTriePListElelemt
 {
 	struct trieNode		* theNode = findNode( (struct trieNode *)_rootNode, aKey, 0, NO, NULL, NULL, self.isCaseInsensitive ? keyComponentCaseInsensitiveForString : keyComponentForString );
 	return theNode != NULL ? theNode->object : nil;
+}
+
+- (NSUInteger)occurancesForKey:(NSString *)aString {
+    struct trieNode		* theNode = findNode( (struct trieNode *)_rootNode, aString, 0, NO, NULL, NULL, self.isCaseInsensitive ? keyComponentCaseInsensitiveForString : keyComponentForString );
+    NSAssert((theNode->object && theNode->occurrences) || (!theNode->object && !theNode->occurrences), @"Или объекта в NDTrie нет и occurances 0, или объект есть и его количество не 0!");
+    return theNode->object ? theNode->occurrences : 0;
 }
 
 static BOOL _addToArrayFunc( id anObject, void * anArray )
@@ -844,7 +851,7 @@ BOOL testFunc( id anObject, void * aContext )
 
 @end
 	
-static struct trieNode * _createNode( NSUInteger aKey, struct trieNode * aParent )
+static struct trieNode * _createNode( NSUInteger aKey, struct trieNode * aParent, NSUInteger occurences)
 {
 	struct trieNode		* theNode = malloc( sizeof(struct trieNode) );
 	theNode->key = aKey;
@@ -852,6 +859,7 @@ static struct trieNode * _createNode( NSUInteger aKey, struct trieNode * aParent
 	theNode->parent = aParent;
 	theNode->object = nil;
 	theNode->count = 0;
+    theNode->occurrences = occurences;
 	return theNode;
 }
 
@@ -922,7 +930,6 @@ static struct trieNode * findNode( struct trieNode * aNode, id aKey, NSUInteger 
 	struct trieNode		* theNode = NULL;
 	BOOL				theEnd = NO;
 	NSUInteger			theKeyComponent = aKeyComponentFunc( aKey, anIndex, &theEnd );
-
 	if( aNode->children != NULL )
 	{
 		NSUInteger		theIndex = _indexForChild( aNode, theKeyComponent );
@@ -937,14 +944,13 @@ static struct trieNode * findNode( struct trieNode * aNode, id aKey, NSUInteger 
 					NSCParameterAssert( aNode->children != NULL );
 				}
 				memmove( &aNode->children[theIndex+1], &aNode->children[theIndex], (aNode->count-theIndex)*sizeof(struct trieNode*) );
-				aNode->children[theIndex] = _createNode( theKeyComponent, aNode );
+				aNode->children[theIndex] = _createNode( theKeyComponent, aNode , 0);
 				theNode = aNode->children[theIndex];
 				aNode->count++;
 				if( anPosition )
 					*anPosition = theIndex;
 				if( aParent )
 					*aParent = aNode;
-				
 			}
 		}
 		else
@@ -960,7 +966,7 @@ static struct trieNode * findNode( struct trieNode * aNode, id aKey, NSUInteger 
 	{
 		aNode->size = 4;
 		aNode->children = malloc( aNode->size*sizeof(struct trieNode*) );
-		aNode->children[0] = _createNode( theKeyComponent, aNode );
+		aNode->children[0] = _createNode( theKeyComponent, aNode , 0);
 		theNode = aNode->children[0];
 		aNode->count++;
 		if( anPosition )
@@ -1078,6 +1084,8 @@ BOOL setObjectForKey( struct trieNode * aNode, id anObject, id aKey, NSUInteger 
 	theNewString = theNode->object == nil;
 	[theNode->object release];
 	theNode->object = [anObject retain];
+    if (theNode->occurrences != NSUIntegerMax)
+        ++theNode->occurrences;
 	return theNewString;
 }
 
@@ -1128,7 +1136,7 @@ BOOL nodesAreEqual( struct trieNode * aNodeA, struct trieNode * aNodeB )
 
 struct trieNode * copyNode( struct trieNode * aNode )
 {
-	struct trieNode		* theNode = _createNode(aNode->key, aNode );
+	struct trieNode		* theNode = _createNode(aNode->key, aNode , aNode->occurrences);
 	theNode->object = [aNode->object retain];
 	theNode->count = theNode->size = aNode->count;
 	theNode->children = (struct trieNode**)malloc( theNode->size * sizeof(struct trieNode*) );

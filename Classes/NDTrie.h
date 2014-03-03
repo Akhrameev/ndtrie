@@ -312,6 +312,7 @@
 	@result Returns <tt>YES</tt> if the recieve contains the string.
  */
 - (BOOL)containsObjectForKey:(NSString *)string;
+
 /*!
 	@method containsObjectForKeyWithPrefix:
 	@abstract Test if a trie contains any strings with a given prifix
@@ -329,12 +330,22 @@
 	@result The found object or nil if no objects is found.
  */
 - (id)objectForKey:(NSString *)key;
+
+/*!
+ @method objectForKey:
+ @abstract Find an object for a given key. Then returns its occurences.
+ @param key The key to search for, unlike <tt>everyObjectForKeyWithPrefix:</tt> the key is a complete match.
+ @result The found object's occurences or 0 if no objects is found.
+ */
+- (NSUInteger)occurancesForKey:(NSString *)aString;
+
 /*!
 	@method everyObject
 	@abstract return every string from a trie.
 	@discussion <tt>everyObject</tt> returns every string within the recieve in an <tt>NSArray</tt> in an indeterminate order, if a string was added twice to the receiver the returned array will not contain two copies of the string.
  */
 - (NSArray *)everyObject;
+
 /*!
 	@method everyObjectForKeyWithPrefix:
 	@abstract Find every string with a given prefix.
